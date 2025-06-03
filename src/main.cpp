@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
     // print_map(switches);
     
     app.loop();
+
+    if(file.is_open()) file.close();
     return 0;
 }
 
@@ -65,7 +67,7 @@ void App::menu() {
       NK_WINDOW_BORDER|NK_WINDOW_MINIMIZABLE))
   {
     nk_layout_row_dynamic(ctx, 25, 1);
-    if (nk_button_label(ctx, "Exit")) exit(0);
+    if (nk_button_label(ctx, "Exit")) running = 0;
 
     nk_layout_row_dynamic(ctx, 25, 2);
     if (nk_button_label(ctx, "Reload config")) {

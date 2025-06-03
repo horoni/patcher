@@ -23,6 +23,9 @@
 #  endif
 #endif
 
+#include <fstream>
+extern std::fstream file;
+
 #if defined(_WIN32)
 static LRESULT CALLBACK
 WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -170,6 +173,7 @@ void App::loop() {
   #endif
 #endif
   }
+  cleanup();
 }
 
 void App::cleanup() {
@@ -188,5 +192,4 @@ void App::cleanup() {
 #endif
   UnregisterClassW(wc.lpszClassName, wc.hInstance);
 #endif
-  exit(0);
 }
