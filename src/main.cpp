@@ -12,7 +12,7 @@
 #include <limits.h>
 
 #include <gui.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 typedef uint8_t u8;

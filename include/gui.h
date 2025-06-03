@@ -10,7 +10,7 @@
 #  define NK_SDL_GL2_IMPLEMENTATION
 #endif
 
-#include <nuklear.h>
+#include <nuklear/nuklear.h>
 
 // WARN:MOVE TO CMAKE CONFIG
 #define GDI_UI
@@ -22,9 +22,9 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  if defined(GDIP_UI)
-#    include <nuklear_gdip.h>
+#    include <nuklear/nuklear_gdip.h>
 #  elif defined(GDI_UI)
-#    include <nuklear_gdi.h>
+#    include <nuklear/nuklear_gdi.h>
 #  endif
 #endif
 

@@ -3,12 +3,12 @@
 #include <gui.h>
 
 #define NK_IMPLEMENTATION
-#include <nuklear.h>
+#include <nuklear/nuklear.h>
 
 #if defined(__linux__)
 #  include <SDL2/SDL.h>
 #  include <SDL2/SDL_opengl.h>
-#  include <nuklear_sdl_gl2.h>
+#  include <nuklear/nuklear_sdl_gl2.h>
 #elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  include <string>
@@ -16,10 +16,10 @@
 #  include <windows.h>
 #  if defined(GDIP_UI)
 #    define NK_GDIP_IMPLEMENTATION
-#    include <nuklear_gdip.h>
+#    include <nuklear/nuklear_gdip.h>
 #  elif defined(GDI_UI)
 #    define NK_GDI_IMPLEMENTATION
-#    include <nuklear_gdi.h>
+#    include <nuklear/nuklear_gdi.h>
 #  endif
 #endif
 

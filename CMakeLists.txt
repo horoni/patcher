@@ -12,6 +12,7 @@ target_include_directories(
   patcher
   PUBLIC
   include/
+  third_party/
 )
 
 if (MSVC)
@@ -29,6 +30,7 @@ target_link_libraries(
   m
 )
 elseif(WIN32)
+# TODO(horoni): FIX(Doesn't work with msvc)
 set_target_properties(patcher PROPERTIES LINK_FLAGS "-static")
 target_link_libraries(
   patcher
