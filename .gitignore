@@ -3,3 +3,5 @@
 /build-w64
 /build-l32
 /build-l64
+compile_commands.json
+.cache
