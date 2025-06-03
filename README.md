@@ -23,3 +23,6 @@ example config:
     ]
 }
 ```
+## Credits
+[Nuklear](https://github.com/Immediate-Mode-UI/Nuklear) <br>
+[json](https://github.com/nlohmann/json) by [nlohmann](https://github.com/nlohmann)
