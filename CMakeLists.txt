@@ -13,7 +13,13 @@ target_include_directories(
   PUBLIC
   include/
 )
-# set_target_properties(patcher PROPERTIES LINK_FLAGS "-static")
+
+if (MSVC)
+  target_compile_options(patcher PRIVATE "/std:c++17")
+else()
+  target_compile_options(patcher PRIVATE "-std=c++17")
+endif()
+
 if(UNIX AND NOT APPLE) 
 target_link_libraries(
   patcher
@@ -23,13 +29,12 @@ target_link_libraries(
   m
 )
 elseif(WIN32)
-target_compile_options(patcher PRIVATE "/std:c++17")
+set_target_properties(patcher PROPERTIES LINK_FLAGS "-static")
 target_link_libraries(
   patcher
   PRIVATE
   user32
   gdi32
-  gdiplus
-  shlwapi
+  msimg32
 )
 endif()

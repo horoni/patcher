@@ -26,28 +26,32 @@ struct patch_t {
     u8 original, replace;
 };
 
-std::string file_path;
+bool config_found = true;
+bool file_found = true;
+std::string config_path = "config.json";
+std::string file_path = "";
 std::fstream file;
 std::map<std::string, std::pair<nk_bool, nk_bool>> stats;
 std::map<std::string, std::vector<struct patch_t>> switches;
 
 std::string format(const char *fmt, ...);
-void parse_config(const char *file_name);
+void parse_config(const std::string& path);
 bool file_exists(const std::string& filename);
 void print_map(std::map<std::string, std::vector<struct patch_t>> &map);
 std::vector<std::string> split(std::string& s, const std::string& delimiter);
 
 int main(int argc, char *argv[])
 {
-    int a;
     App app("Patcher", WINDOW_WIDTH, WINDOW_HEIGHT);
-    parse_config("config.json");
-    if (file_exists(file_path)) {
+    
+    if (file_exists(config_path))
+        parse_config(config_path);
+    else config_found = false;
+    
+    if (file_exists(file_path))
         file.open(file_path);
-    } else {
-        std::cout << format("File \"%s\"is not exists", file_path.c_str()) << std::endl;
-        exit(1);
-    }
+    else file_found = false;
+
     // validate_patches();
     // print_map(switches);
     
@@ -55,34 +59,60 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+// TODO(): Reopen file
 void App::menu() {
   if (nk_begin(ctx, window_name, nk_rect(0, 0, 400, 400),
       NK_WINDOW_BORDER|NK_WINDOW_MINIMIZABLE))
   {
-    nk_layout_row_static(ctx, 30, 80, 1);
+    nk_layout_row_dynamic(ctx, 25, 1);
     if (nk_button_label(ctx, "Exit")) exit(0);
-    for ( auto& [key, val] : switches) {
-        nk_checkbox_label(ctx, key.c_str(), &stats[key].first);
-        if (stats[key].first != stats[key].second) {
-            std::cout << format("status of %s changed to %d", key.c_str(), stats[key].first) << std::endl;
-            for (auto& p : val) {
-                file.seekp(p.addr);
-                file.write((const char *)(stats[key].first == 1 ? &p.replace : &p.original), 1);
+
+    nk_layout_row_dynamic(ctx, 25, 2);
+    if (nk_button_label(ctx, "Reload config")) {
+        switches.clear();
+        stats.clear();
+        if (file_exists(config_path)) {
+            parse_config(config_path);
+            config_found = true;
+        } else config_found = false;
+    }
+    if (nk_button_label(ctx, "Reload file")) {
+        if (file.is_open()) file.close();
+        if (file_exists(file_path)) {
+            file.open(file_path);
+            file_found = true;
+        } else file_found = false;        
+    }
+    
+    if (!config_found) {
+        nk_layout_row_dynamic(ctx, 25, 1);
+        nk_label_wrap(ctx, format("Config \"%s\" is not found", config_path.c_str()).c_str());
+    } else if (!file_found) {
+        nk_layout_row_dynamic(ctx, 25, 1);
+        nk_label_wrap(ctx, format("File \"%s\" is not exists", file_path.c_str()).c_str());
+    } else {
+        nk_layout_row_dynamic(ctx, 25, 2);
+        for ( auto& [key, val] : switches) {
+            nk_checkbox_label(ctx, key.c_str(), &stats[key].first);
+            if (stats[key].first != stats[key].second) {
+                std::cout << format("status of %s changed to %d", key.c_str(), stats[key].first) << std::endl;
+                for (auto& p : val) {
+                    file.seekp(p.addr);
+                    file.write((const char *)(stats[key].first == 1 ? &p.replace : &p.original), 1);
+                }
+                file.flush();
+                stats[key].second = stats[key].first;
             }
-            file.flush();
-            stats[key].second = stats[key].first;
         }
     }
-    nk_layout_row_dynamic(ctx, 100, 1);
-    nk_layout_row_static(ctx, 30, 80, 1);
   }
   nk_end(ctx);
 }
 
-void parse_config(const char *file_name) {
+void parse_config(const std::string& path) {
     json config_j;
     json switches_j;
-    std::ifstream f(file_name);
+    std::ifstream f(path);
     config_j = json::parse(f);
     f.close();
     for (auto& [key, value] : config_j.items()) {

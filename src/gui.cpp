@@ -1,24 +1,29 @@
 #include <cstdlib>
-#include <string>
-#include <memory>
 
 #include <gui.h>
 
 #define NK_IMPLEMENTATION
 #include <nuklear.h>
 
-#ifdef __linux__
+#if defined(__linux__)
 #  include <SDL2/SDL.h>
 #  include <SDL2/SDL_opengl.h>
 #  include <nuklear_sdl_gl2.h>
-#elif _WIN32
+#elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
-#  define NK_GDIP_IMPLEMENTATION
+#  include <string>
+#  include <memory>
 #  include <windows.h>
-#  include <nuklear_gdip.h>
+#  if defined(GDIP_UI)
+#    define NK_GDIP_IMPLEMENTATION
+#    include <nuklear_gdip.h>
+#  elif defined(GDI_UI)
+#    define NK_GDI_IMPLEMENTATION
+#    include <nuklear_gdi.h>
+#  endif
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
 static LRESULT CALLBACK
 WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -27,7 +32,12 @@ WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
         PostQuitMessage(0);
         return 0;
     }
-    if (nk_gdip_handle_event(wnd, msg, wparam, lparam))
+    if (
+#  if defined(GDIP_UI)
+      nk_gdip_handle_event(wnd, msg, wparam, lparam))
+#  elif defined(GDI_UI)
+      nk_gdi_handle_event(wnd, msg, wparam, lparam))
+#  endif
         return 0;
     return DefWindowProcW(wnd, msg, wparam, lparam);
 }
@@ -44,7 +54,7 @@ std::wstring to_wstring(const char* str) {
 
 App::App(const char *w_name, int w, int h) {
   window_name = w_name;
-#ifdef __linux__
+#if defined(__linux__)
   /* SDL setup */
   SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
   SDL_Init(SDL_INIT_VIDEO);
@@ -66,10 +76,13 @@ App::App(const char *w_name, int w, int h) {
       nk_sdl_font_stash_begin(&atlas);
       nk_sdl_font_stash_end();
   }
-#elif _WIN32
+#elif defined(_WIN32)
   RECT rect = { 0, 0, w, h };
   DWORD style = WS_OVERLAPPEDWINDOW;
   DWORD exstyle = WS_EX_APPWINDOW;
+  #if defined(GDI_UI)
+  ATOM atom;
+  #endif
 
   /* Win32 */
   memset(&wc, 0, sizeof(wc));
@@ -79,17 +92,26 @@ App::App(const char *w_name, int w, int h) {
   wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.lpszClassName = L"NuklearWindowClass";
+  #if defined(GDIP_UI)
   RegisterClassW(&wc);
+  #elif defined(GDI_UI)
+  atom = RegisterClassW(&wc);
+  #endif
 
   AdjustWindowRectEx(&rect, style, FALSE, exstyle);
-
   wnd = CreateWindowExW(exstyle, wc.lpszClassName, to_wstring(window_name).c_str(),
       style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
       rect.right - rect.left, rect.bottom - rect.top,
       NULL, NULL, wc.hInstance, NULL);
+  #if defined(GDI_UI)
+  dc = GetDC(wnd);
+  font = nk_gdifont_create("Arial", 12);
+  ctx = nk_gdi_init(font, dc, w, h);
+  #elif defined(GDIP_UI)
   ctx = nk_gdip_init(wnd, w, h);
   font = nk_gdipfont_create("Arial", 12);
   nk_gdip_set_font(font);
+  #endif
 #endif
 
   bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
@@ -98,7 +120,7 @@ App::App(const char *w_name, int w, int h) {
 void App::loop() {
   while (running)
   {
-#ifdef __linux__
+#if defined(__linux__)
       /* Input */
       SDL_Event evt;
       nk_input_begin(ctx);
@@ -108,7 +130,7 @@ void App::loop() {
       }
       nk_sdl_handle_grab(); /* optional grabbing behavior */
       nk_input_end(ctx);
-#elif _WIN32
+#elif defined(_WIN32)
       /* Input */
       MSG msg;
       nk_input_begin(ctx);
@@ -130,10 +152,9 @@ void App::loop() {
       }
       nk_input_end(ctx);
 #endif
-
       /* GUI */
       menu();
-#ifdef __linux__
+#if defined(__linux__)
       /* Draw */
       SDL_GetWindowSize(win, &win_width, &win_height);
       glViewport(0, 0, win_width, win_height);
@@ -141,21 +162,30 @@ void App::loop() {
       glClearColor(bg.r, bg.g, bg.b, bg.a);
       nk_sdl_render(NK_ANTI_ALIASING_ON);
       SDL_GL_SwapWindow(win);
-#elif _WIN32
+#elif defined(_WIN32)
+  #if defined (GDIP_UI)
       nk_gdip_render(NK_ANTI_ALIASING_ON, nk_rgb(30,30,30));
+  #elif defined (GDI_UI)
+      nk_gdi_render(nk_rgb(30,30,30));
+  #endif
 #endif
   }
 }
 
 void App::cleanup() {
-#ifdef __linux__
+#if defined(__linux__)
   nk_sdl_shutdown();
   SDL_GL_DeleteContext(glContext);
   SDL_DestroyWindow(win);
   SDL_Quit();
-#elif _WIN32
+#elif defined(_WIN32)
+#if defined(GDIP_UI)
   nk_gdipfont_del(font);
   nk_gdip_shutdown();
+#elif defined(GDI_UI)
+  nk_gdifont_del(font);
+  ReleaseDC(wnd, dc);
+#endif
   UnregisterClassW(wc.lpszClassName, wc.hInstance);
 #endif
   exit(0);
