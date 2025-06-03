@@ -48,5 +48,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{matrix.os}}-${{env.BUILD_TYPE}}
-          #path: build/${{env.BUILD_TYPE}}
           path: build/patcher
+        if: ${{ contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')}}
+
+      - name: Upload windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{matrix.os}}-${{env.BUILD_TYPE}}
+          path: build/patcher.exe
+        if: ${{ contains(matrix.os, 'windows') }}
