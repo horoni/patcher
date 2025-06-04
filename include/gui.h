@@ -19,20 +19,13 @@
 
 #include <nuklear/nuklear.h>
 
-// WARN:MOVE TO CMAKE CONFIG
-#define GDI_UI
-
 #if defined(__linux__)
 #  include <SDL2/SDL.h>
 #  include <SDL2/SDL_opengl.h>
 #elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
-#  if defined(GDIP_UI)
-#    include <nuklear/nuklear_gdip.h>
-#  elif defined(GDI_UI)
-#    include <nuklear/nuklear_gdi.h>
-#  endif
+#  include <nuklear/nuklear_gdi.h>
 #endif
 
 class App {
@@ -41,12 +34,8 @@ private:
     SDL_Window *win;
     SDL_GLContext glContext;
 #elif defined(_WIN32)
-#  if defined(GDIP_UI)
-    GdipFont* font;
-#  elif defined(GDI_UI)
     GdiFont* font;
     HDC dc;
-#  endif
     WNDCLASSW wc;
     HWND wnd;
     int needs_refresh = 1;
