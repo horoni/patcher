@@ -28,8 +28,8 @@ typedef uint64_t u64;
 bool config_found = true;
 bool file_found = true;
 std::string config_path = "config.json";
-config_t conf;
 std::fstream file;
+config_t conf;
 
 int main(int argc, char *argv[])
 {
@@ -51,9 +51,8 @@ int main(int argc, char *argv[])
 
 void App::menu() {
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(win_width, win_height)/*, ImGuiCond_FirstUseEver*/);
+    ImGui::SetNextWindowSize(ImVec2(win_width, win_height));
     if (ImGui::Begin(window_name, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse )) {
-        ImGui::PushItemWidth(-ImGui::GetWindowWidth() * 0.9f);
         if (ImGui::Button("Exit", ImVec2(-1.0f, 0.0f))) running = 0;
 
         float avail_width = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x;

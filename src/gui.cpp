@@ -88,7 +88,6 @@ App::App(const char *w_name, int w, int h) {
 
 
 #elif defined(_WIN32)
-  /* Win32 */
   DWORD style = WS_OVERLAPPEDWINDOW;
   wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui", nullptr };
   ::RegisterClassExW(&wc);
