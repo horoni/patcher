@@ -1,6 +1,7 @@
 # patcher
-[![CMake (Windows ARM32/64)](https://github.com/horoni/patcher/actions/workflows/cmake_win-arm.yml/badge.svg)](https://github.com/horoni/patcher/actions/workflows/cmake_win-arm.yml)
-[![CMake (Linux, macOS, Windows)](https://github.com/horoni/patcher/actions/workflows/cmake.yml/badge.svg)](https://github.com/horoni/patcher/actions/workflows/cmake.yml)
+[![CMake (Windows ARM32/64)](https://github.com/horoni/patcher/actions/workflows/cmake_woa.yml/badge.svg)](https://github.com/horoni/patcher/actions/workflows/cmake_woa.yml)
+[![CMake (Linux)](https://github.com/horoni/patcher/actions/workflows/cmake_linux.yml/badge.svg)](https://github.com/horoni/patcher/actions/workflows/cmake_linux.yml)
+[![CMake (Windows)](https://github.com/horoni/patcher/actions/workflows/cmake_windows.yml/badge.svg)](https://github.com/horoni/patcher/actions/workflows/cmake_windows.yml)
 
 example config:
 ```json
