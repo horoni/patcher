@@ -49,8 +49,7 @@ int main(int argc, char *argv[])
 }
 
 void App::menu() {
-  if (nk_begin(ctx, window_name, nk_rect(0, 0, 400, 400),
-      NK_WINDOW_BORDER|NK_WINDOW_MINIMIZABLE))
+  if (nk_begin(ctx, window_name, nk_rect(0, 0, 400, 400), NK_WINDOW_BORDER))
   {
     nk_layout_row_dynamic(ctx, 25, 1);
     if (nk_button_label(ctx, "Exit")) running = 0;
