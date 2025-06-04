@@ -67,6 +67,8 @@ App::App(const char *w_name, int w, int h) {
       w, h, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI);
   glContext = SDL_GL_CreateContext(win);
   SDL_GetWindowSize(win, &win_width, &win_height);
+  SDL_SetWindowMinimumSize(win, win_width, win_height);
+  SDL_SetWindowMaximumSize(win, win_width, win_height);
 
   /* GUI */
   ctx = nk_sdl_init(win);
@@ -77,7 +79,7 @@ App::App(const char *w_name, int w, int h) {
   }
 #elif defined(_WIN32)
   RECT rect = { 0, 0, w, h };
-  DWORD style = WS_OVERLAPPEDWINDOW;
+  DWORD style = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
   DWORD exstyle = WS_EX_APPWINDOW;
   ATOM atom;
 
