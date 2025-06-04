@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.30)
 project("mc_patcher")
 
 file(GLOB SRC src/*.cpp src/*.c)
