@@ -5,46 +5,27 @@
   You should have received a copy of the GNU General Public License along with Foobar. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#define NK_INCLUDE_FIXED_TYPES
-#define NK_INCLUDE_STANDARD_IO
-#define NK_INCLUDE_STANDARD_VARARGS
-#define NK_INCLUDE_DEFAULT_ALLOCATOR
-
-#if defined(__linux__)
-#  define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
-#  define NK_INCLUDE_FONT_BAKING
-#  define NK_INCLUDE_DEFAULT_FONT
-#  define NK_SDL_GL2_IMPLEMENTATION
-#endif
-
-#include <nuklear/nuklear.h>
-
 #if defined(__linux__)
 #  include <SDL2/SDL.h>
 #  include <SDL2/SDL_opengl.h>
 #elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
-#  include <nuklear/nuklear_gdi.h>
 #endif
+
+#include <imgui/imgui.h>
+
+inline int win_width, win_height;
 
 class App {
 private:
 #if   defined(__linux__)
-    SDL_Window *win;
-    SDL_GLContext glContext;
-#elif defined(_WIN32)
-    GdiFont* font;
-    HDC dc;
-    WNDCLASSW wc;
-    HWND wnd;
-    int needs_refresh = 1;
+    SDL_Window *window;
+    SDL_GLContext gl_context;
 #endif
-    struct nk_context *ctx;
-    struct nk_colorf bg;
-    int win_width, win_height;
     int running = 1;
     const char *window_name;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 public:
   App(const char *w_name, int w, int h);
   void menu();

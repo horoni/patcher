@@ -45,6 +45,6 @@ void parse_config(const std::string& path, struct config_t& conf) {
             }
         }
         conf.switches[title] = patchs;
-        conf.stats[title] = {0, 0};
+        conf.stats[title] = {false, false};
     }
 }

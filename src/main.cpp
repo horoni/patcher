@@ -15,6 +15,7 @@
 #include <limits.h>
 
 #include <gui.h>
+#include <imgui/imgui.h>
 #include <config.h>
 #include <util.h>
 
@@ -49,49 +50,47 @@ int main(int argc, char *argv[])
 }
 
 void App::menu() {
-  if (nk_begin(ctx, window_name, nk_rect(0, 0, 400, 400),
-      NK_WINDOW_BORDER|NK_WINDOW_MINIMIZABLE))
-  {
-    nk_layout_row_dynamic(ctx, 25, 1);
-    if (nk_button_label(ctx, "Exit")) running = 0;
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(win_width, win_height)/*, ImGuiCond_FirstUseEver*/);
+    if (ImGui::Begin(window_name, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse )) {
+        ImGui::PushItemWidth(-ImGui::GetWindowWidth() * 0.9f);
+        if (ImGui::Button("Exit", ImVec2(-1.0f, 0.0f))) running = 0;
 
-    nk_layout_row_dynamic(ctx, 25, 2);
-    if (nk_button_label(ctx, "Reload config")) {
-        conf.switches.clear();
-        conf.stats.clear();
-        if (file_exists(config_path)) {
-            parse_config(config_path, conf);
-            config_found = true;
-        } else config_found = false;
-    }
-    if (nk_button_label(ctx, "Reload file")) {
-        if (file.is_open()) file.close();
-        if (file_exists(conf.file_path)) {
-            file.open(conf.file_path);
-            file_found = true;
-        } else file_found = false;        
-    }
-    
-    if (!config_found) {
-        nk_layout_row_dynamic(ctx, 25, 1);
-        nk_label_wrap(ctx, format("Config \"%s\" is not found", config_path.c_str()).c_str());
-    } else if (!file_found) {
-        nk_layout_row_dynamic(ctx, 25, 1);
-        nk_label_wrap(ctx, format("File \"%s\" is not exists", conf.file_path.c_str()).c_str());
-    } else {
-        nk_layout_row_dynamic(ctx, 25, 2);
-        for ( auto& [key, val] : conf.switches) {
-            nk_checkbox_label(ctx, key.c_str(), &conf.stats[key].first);
-            if (conf.stats[key].first != conf.stats[key].second) {
-                for (auto& p : val) {
-                    file.seekp(p.addr);
-                    file.write((const char *)(conf.stats[key].first == 1 ? &p.replace : &p.original), 1);
+        float avail_width = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x;
+        if (ImGui::Button("Reload config", ImVec2(avail_width*0.5f, 0.0f))) {
+            conf.switches.clear();
+            conf.stats.clear();
+            if (file_exists(config_path)) {
+                parse_config(config_path, conf);
+                config_found = true;
+            } else config_found = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reload file", ImVec2(avail_width*0.5f, 0.0f))) {
+            if (file.is_open()) file.close();
+            if (file_exists(conf.file_path)) {
+                file.open(conf.file_path);
+                file_found = true;
+            } else file_found = false;
+        }
+
+        if (!config_found) {
+            ImGui::Text("Config \"%s\" not found.", config_path.c_str());
+        } else if (!file_found) {
+            ImGui::Text("File \"%s\" is not exists.", conf.file_path.c_str());
+        } else {
+            for ( auto& [key, val] : conf.switches) {
+                ImGui::Checkbox(key.c_str(), &conf.stats[key].first);
+                if (conf.stats[key].first != conf.stats[key].second) {
+                    for (auto& p : val) {
+                        file.seekp(p.addr);
+                        file.write((const char *)(conf.stats[key].first == 1 ? &p.replace : &p.original), 1);
+                    }
+                    file.flush();
+                    conf.stats[key].second = conf.stats[key].first;
                 }
-                file.flush();
-                conf.stats[key].second = conf.stats[key].first;
             }
         }
     }
-  }
-  nk_end(ctx);
+    ImGui::End();
 }

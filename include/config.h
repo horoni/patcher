@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 
-typedef std::map<std::string, std::pair<int, int>> stats_t;
+typedef std::map<std::string, std::pair<bool, bool>> stats_t;
 typedef std::map<std::string, std::vector<struct patch_t>> switches_t;
 
 struct patch_t {

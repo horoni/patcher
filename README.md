@@ -24,7 +24,7 @@ example config:
 }
 ```
 ## Credits
-[Nuklear](https://github.com/Immediate-Mode-UI/Nuklear) <br>
+[imgui](https://github.com/ocornut/imgui) by [ocornut](https://github.com/ocornut) <br>
 [json](https://github.com/nlohmann/json) by [nlohmann](https://github.com/nlohmann)
 
 ## License
