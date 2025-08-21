@@ -27,33 +27,12 @@
 #include <fstream>
 extern std::fstream file;
 
-#if defined(_WIN32)
-static LRESULT CALLBACK
-WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg) {
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    }
-    if (nk_gdi_handle_event(wnd, msg, wparam, lparam))
-        return 0;
-    return DefWindowProcW(wnd, msg, wparam, lparam);
-}
-std::wstring to_wstring(const char* str) {
-    std::unique_ptr<wchar_t[]> tmp = nullptr;
-    size_t sz, len;
-    len = mbstowcs(nullptr, str, 0); // получить размер
-    sz = len + 1;
-    tmp.reset(new wchar_t[sz]);      // выделить память
-    mbstowcs(tmp.get(), str, sz);    // перекодировать
-    return std::wstring(tmp.get());
-}
-#endif
-
-App::App(const char *w_name, int w, int h) {
-  window_name = w_name;
 #if defined(__linux__)
+App::App(const char *w_name, int w, int h)
+{
+  struct nk_font_atlas *atlas;
+
+  window_name = w_name;
   /* SDL setup */
   SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
   SDL_Init(SDL_INIT_VIDEO);
@@ -72,18 +51,81 @@ App::App(const char *w_name, int w, int h) {
 
   /* GUI */
   ctx = nk_sdl_init(win);
-  {
-      struct nk_font_atlas *atlas;
-      nk_sdl_font_stash_begin(&atlas);
-      nk_sdl_font_stash_end();
+  nk_sdl_font_stash_begin(&atlas);
+  nk_sdl_font_stash_end();
+  bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
+}
+
+void App::loop()
+{
+  while (running) {
+    /* Input */
+    SDL_Event evt;
+    nk_input_begin(ctx);
+    while (SDL_PollEvent(&evt)) {
+      if (evt.type == SDL_QUIT) cleanup();
+      nk_sdl_handle_event(&evt);
+    }
+    nk_sdl_handle_grab(); /* optional grabbing behavior */
+    nk_input_end(ctx);
+
+    /* GUI */
+    menu();
+
+    /* Draw */
+    SDL_GetWindowSize(win, &win_width, &win_height);
+    glViewport(0, 0, win_width, win_height);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(bg.r, bg.g, bg.b, bg.a);
+    nk_sdl_render(NK_ANTI_ALIASING_ON);
+    SDL_GL_SwapWindow(win);
   }
+  cleanup();
+}
+
+void App::cleanup()
+{
+  nk_sdl_shutdown();
+  SDL_GL_DeleteContext(glContext);
+  SDL_DestroyWindow(win);
+  SDL_Quit();
+}
+
 #elif defined(_WIN32)
+
+static LRESULT CALLBACK
+WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg) {
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    if (nk_gdi_handle_event(wnd, msg, wparam, lparam))
+        return 0;
+    return DefWindowProcW(wnd, msg, wparam, lparam);
+}
+
+std::wstring to_wstring(const char* str)
+{
+    std::unique_ptr<wchar_t[]> tmp = nullptr;
+    size_t len;
+
+    len = 1 + mbstowcs(nullptr, str, 0);
+    tmp.reset(new wchar_t[len]);
+    mbstowcs(tmp.get(), str, len);
+    return std::wstring(tmp.get());
+}
+
+App::App(const char *w_name, int w, int h)
+{
+  window_name = w_name;
   RECT rect = { 0, 0, w, h };
-  DWORD style = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+  DWORD style = (WS_OVERLAPPED | WS_CAPTION
+      | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
   DWORD exstyle = WS_EX_APPWINDOW;
   ATOM atom;
 
-  /* Win32 */
   memset(&wc, 0, sizeof(wc));
   wc.style = CS_DBLCLKS;
   wc.lpfnWndProc = WindowProc;
@@ -102,72 +144,49 @@ App::App(const char *w_name, int w, int h) {
   dc = GetDC(wnd);
   font = nk_gdifont_create("Arial", 12);
   ctx = nk_gdi_init(font, dc, w, h);
-#endif
-
   bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
 }
 
-void App::loop() {
-  while (running)
-  {
-#if defined(__linux__)
-      /* Input */
-      SDL_Event evt;
-      nk_input_begin(ctx);
-      while (SDL_PollEvent(&evt)) {
-          if (evt.type == SDL_QUIT) cleanup();
-          nk_sdl_handle_event(&evt);
+void App::loop()
+{
+  int needs_refresh = 1;
+
+  while (running) {
+    /* Input */
+    MSG msg;
+    nk_input_begin(ctx);
+    if (needs_refresh == 0) {
+      if (GetMessageW(&msg, NULL, 0, 0) <= 0)
+        cleanup();
+      else {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
       }
-      nk_sdl_handle_grab(); /* optional grabbing behavior */
-      nk_input_end(ctx);
-#elif defined(_WIN32)
-      /* Input */
-      MSG msg;
-      nk_input_begin(ctx);
-      if (needs_refresh == 0) {
-          if (GetMessageW(&msg, NULL, 0, 0) <= 0)
-              cleanup();
-          else {
-              TranslateMessage(&msg);
-              DispatchMessageW(&msg);
-          }
-          needs_refresh = 1;
-      } else needs_refresh = 0;
-      while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
-          if (msg.message == WM_QUIT)
-              cleanup();
-          TranslateMessage(&msg);
-          DispatchMessageW(&msg);
-          needs_refresh = 1;
-      }
-      nk_input_end(ctx);
-#endif
-      /* GUI */
-      menu();
-#if defined(__linux__)
-      /* Draw */
-      SDL_GetWindowSize(win, &win_width, &win_height);
-      glViewport(0, 0, win_width, win_height);
-      glClear(GL_COLOR_BUFFER_BIT);
-      glClearColor(bg.r, bg.g, bg.b, bg.a);
-      nk_sdl_render(NK_ANTI_ALIASING_ON);
-      SDL_GL_SwapWindow(win);
-#elif defined(_WIN32)
-      nk_gdi_render(nk_rgb(30,30,30));
-#endif
+      needs_refresh = 1;
+    } else
+      needs_refresh = 0;
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+      if (msg.message == WM_QUIT)
+        cleanup();
+      TranslateMessage(&msg);
+      DispatchMessageW(&msg);
+      needs_refresh = 1;
+    }
+    nk_input_end(ctx);
+
+    /* GUI */
+    menu();
+
+    nk_gdi_render(nk_rgb(30,30,30));
   }
   cleanup();
 }
 
-void App::cleanup() {
-#if defined(__linux__)
-  nk_sdl_shutdown();
-  SDL_GL_DeleteContext(glContext);
-  SDL_DestroyWindow(win);
-  SDL_Quit();
-#elif defined(_WIN32)
+void App::cleanup()
+{
   nk_gdifont_del(font);
   ReleaseDC(wnd, dc);
   UnregisterClassW(wc.lpszClassName, wc.hInstance);
-#endif
 }
+
+#endif

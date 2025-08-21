@@ -31,20 +31,20 @@
 class App {
 private:
 #if   defined(__linux__)
-    SDL_Window *win;
-    SDL_GLContext glContext;
+  SDL_Window *win;
+  SDL_GLContext glContext;
 #elif defined(_WIN32)
-    GdiFont* font;
-    HDC dc;
-    WNDCLASSW wc;
-    HWND wnd;
-    int needs_refresh = 1;
+  GdiFont* font;
+  HDC dc;
+  WNDCLASSW wc;
+  HWND wnd;
 #endif
-    struct nk_context *ctx;
-    struct nk_colorf bg;
-    int win_width, win_height;
-    int running = 1;
-    const char *window_name;
+  struct nk_context *ctx;
+  struct nk_colorf bg;
+  int win_width, win_height;
+  const char *window_name;
+  int running = 1;
+
 public:
   App(const char *w_name, int w, int h);
   void menu();
